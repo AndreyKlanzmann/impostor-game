@@ -12,10 +12,14 @@ interface GamePlayProps {
   onAdvanceToVoting: () => void
   onGoHome: () => void
   isHost: boolean
+  isLocalMode: boolean
 }
 
-export function GamePlay({ round, players, playerId, onAdvanceToVoting, onGoHome, isHost }: GamePlayProps) {
+export function GamePlay({ round, players, playerId, onAdvanceToVoting, onGoHome, isHost, isLocalMode }: GamePlayProps) {
   const [revealed, setRevealed] = useState(false)
+  // Modo local: índice do jogador atual na sequência de revelação
+  const [localIndex, setLocalIndex] = useState(0)
+  const [localDone, setLocalDone] = useState(false)
 
   const mode = round.word_innocent ? "palavra" : "pergunta"
 
@@ -30,12 +34,142 @@ export function GamePlay({ round, players, playerId, onAdvanceToVoting, onGoHome
     return shuffled
   }, [players, round.id])
 
+  // Ordem local = mesma ordem embaralhada do debate
+  const localOrder = debateOrder
+
+  const getContentForPlayer = (player: Player) => {
+    const isImpostor = round.impostor_ids.includes(player.player_id)
+    if (mode === "palavra") return isImpostor ? round.word_impostor : round.word_innocent
+    return isImpostor ? round.question_impostor : round.question_normal
+  }
+
   const getMyContent = () => {
     const isImpostor = round.impostor_ids.includes(playerId)
     if (mode === "palavra") return isImpostor ? round.word_impostor : round.word_innocent
     return isImpostor ? round.question_impostor : round.question_normal
   }
 
+  const handleNextLocal = () => {
+    setRevealed(false)
+    if (localIndex + 1 >= localOrder.length) {
+      setLocalDone(true)
+    } else {
+      setLocalIndex(localIndex + 1)
+    }
+  }
+
+  // ── MODO LOCAL ──────────────────────────────────────────────
+  if (isLocalMode && !localDone) {
+    const currentPlayer = localOrder[localIndex]
+    const isLast = localIndex === localOrder.length - 1
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center gap-6 w-full max-w-sm mx-auto px-4"
+      >
+        <div className="flex gap-2 flex-wrap justify-center">
+          <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-xs font-mono uppercase">
+            Rodada {round.round_number}
+          </span>
+          {round.ai_generated && (
+            <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-mono">✨ IA</span>
+          )}
+          <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-xs font-mono">
+            {localIndex + 1}/{localOrder.length}
+          </span>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {!revealed ? (
+            <motion.div
+              key="waiting"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex flex-col items-center gap-5 w-full"
+            >
+              <div className="text-center bg-secondary/30 rounded-2xl p-8 w-full">
+                <p className="text-sm text-muted-foreground mb-2">Vez de</p>
+                <p className="text-3xl font-bold text-foreground">{currentPlayer.name}</p>
+                <p className="text-sm text-muted-foreground mt-4">
+                  Todos fechem os olhos! 👀
+                </p>
+              </div>
+              <Button
+                size="lg"
+                className="h-16 w-full text-base"
+                onClick={() => setRevealed(true)}
+              >
+                {currentPlayer.name} está pronto → Mostrar
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="showing"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-5 w-full"
+            >
+              <div className="text-center p-6 rounded-2xl border-2 border-primary bg-primary/10 w-full">
+                <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">
+                  {currentPlayer.name} — sua {mode === "palavra" ? "palavra" : "pergunta"}
+                </p>
+                <p className={`font-bold text-foreground mt-2 ${mode === "palavra" ? "text-3xl" : "text-xl"}`}>
+                  {getContentForPlayer(currentPlayer)}
+                </p>
+              </div>
+              <Button
+                className="w-full h-14"
+                variant="secondary"
+                onClick={handleNextLocal}
+              >
+                {isLast ? "Todos viram! → Iniciar debate" : `Próximo: ${localOrder[localIndex + 1].name} →`}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          onClick={onGoHome}
+          style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}
+          className="text-xs text-muted-foreground underline underline-offset-2 px-4 py-2"
+        >
+          ← Sair da sala
+        </button>
+      </motion.div>
+    )
+  }
+
+  // ── MODO LOCAL — fase debate (todos já viram) ────────────────
+  if (isLocalMode && localDone && round.status === "revealing" && isHost) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center gap-6 w-full max-w-sm mx-auto px-4"
+      >
+        <div className="text-center bg-secondary/30 rounded-2xl p-8 w-full">
+          <p className="text-2xl font-bold text-foreground mb-2">✅ Todos viram!</p>
+          <p className="text-sm text-muted-foreground">Hora de debater quem é o impostor.</p>
+        </div>
+        <Button onClick={onAdvanceToVoting} className="w-full h-12">
+          Iniciar debate →
+        </Button>
+        <button
+          onClick={onGoHome}
+          style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}
+          className="text-xs text-muted-foreground underline underline-offset-2 px-4 py-2"
+        >
+          ← Sair da sala
+        </button>
+      </motion.div>
+    )
+  }
+
+  // ── MODO MULTIPLAYER (normal) ────────────────────────────────
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -52,9 +186,7 @@ export function GamePlay({ round, players, playerId, onAdvanceToVoting, onGoHome
           </span>
         )}
         {round.ai_generated && (
-          <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-mono">
-            ✨ IA
-          </span>
+          <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-mono">✨ IA</span>
         )}
       </div>
 
@@ -144,14 +276,17 @@ export function GamePlay({ round, players, playerId, onAdvanceToVoting, onGoHome
         </motion.div>
       )}
 
-      <div className="w-full mt-1">
-        <p className="text-xs text-muted-foreground text-center mb-3">
-          {players.length} jogadores · {round.impostor_ids.length} impostor{round.impostor_ids.length > 1 ? "es" : ""}
-        </p>
-        <Button variant="ghost" onClick={onGoHome} className="w-full text-muted-foreground">
-          ← Sair da sala
-        </Button>
-      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        {players.length} jogadores · {round.impostor_ids.length} impostor{round.impostor_ids.length > 1 ? "es" : ""}
+      </p>
+
+      <button
+        onClick={onGoHome}
+        style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}
+        className="text-xs text-muted-foreground underline underline-offset-2 px-4 py-2"
+      >
+        ← Sair da sala
+      </button>
     </motion.div>
   )
 }
