@@ -49,18 +49,18 @@ export default function RoomPage() {
     await fetch("/api/rooms/return-lobby", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId: room.id, playerId }),
+      body: JSON.stringify({ roomId: room.id, playerId, customTheme }),
     })
   }, [room, playerId, isHost])
 
-  const handleStartRound = useCallback(async () => {
+  const handleStartRound = useCallback(async (customTheme?: string) => {
     if (!room) return
     setActionLoading(true)
     try {
       const res = await fetch("/api/rooms/start-round", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId: room.id, playerId }),
+        body: JSON.stringify({ roomId: room.id, playerId, customTheme }),
       })
       if (!res.ok) console.error("Start round error:", (await res.json()).error)
     } finally {
@@ -158,7 +158,7 @@ export default function RoomPage() {
       <AnimatePresence mode="wait">
         {gamePhase === "lobby" && (
           <Lobby key="lobby" code={code} players={players} isHost={isHost}
-            mode={currentMode} onStart={handleStartRound}
+            mode={currentMode} onStart={(theme) => handleStartRound(theme)}
             onGoHome={handleGoHome} onChangeMode={handleChangeMode} loading={actionLoading} />
         )}
 
