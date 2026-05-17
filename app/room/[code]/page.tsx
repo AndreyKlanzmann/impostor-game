@@ -17,27 +17,26 @@ export default function RoomPage() {
   const router = useRouter()
   const code = (params.code as string)?.toUpperCase()
 
-  const [playerId, setPlayerId] = useState<string>("")
+  // Lê sessionStorage imediatamente no primeiro render
+  const [playerId, setPlayerId] = useState<string>(() => {
+    if (typeof window === "undefined") return ""
+    return sessionStorage.getItem("playerId") ?? ""
+  })
+  const [needsName] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false
+    return !sessionStorage.getItem("playerId")
+  })
   const [actionLoading, setActionLoading] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
   const [localMode, setLocalMode] = useState<string | null>(null)
-  const [needsName, setNeedsName] = useState<boolean | null>(null) // null = ainda verificando
   const [nameInput, setNameInput] = useState("")
   const [joinError, setJoinError] = useState("")
   const [joining, setJoining] = useState(false)
+  const [joined, setJoined] = useState(false)
 
-  // useRoom sempre roda com o code real — o hook já tem guard interno
-  const { room, players, currentRound, votes, answers, loading, error, refetch } = useRoom(code)
-
-  useEffect(() => {
-    const storedId = sessionStorage.getItem("playerId")
-    if (storedId) {
-      setPlayerId(storedId)
-      setNeedsName(false)
-    } else {
-      setNeedsName(true)
-    }
-  }, [])
+  const { room, players, currentRound, votes, answers, loading, error, refetch } = useRoom(
+    needsName && !joined ? "" : code
+  )
 
   useEffect(() => {
     if (votes && playerId) setHasVoted(votes.some(v => v.voter_id === playerId))
@@ -65,8 +64,7 @@ export default function RoomPage() {
       sessionStorage.setItem("playerId", data.playerId)
       sessionStorage.setItem("playerName", nameInput.trim())
       setPlayerId(data.playerId)
-      setNeedsName(false)
-      // Refetch explícito para garantir que o jogador aparece imediatamente
+      setJoined(true)
       await refetch()
     } catch (err) {
       setJoinError(err instanceof Error ? err.message : "Erro ao entrar na sala")
@@ -159,10 +157,8 @@ export default function RoomPage() {
   }, [currentRound, playerId])
 
   // Ainda verificando se tem sessão salva
-  if (needsName === null) return null
-
   // Tela de entrada via link direto
-  if (needsName) {
+  if (needsName && !joined) {
     return (
       <main className="min-h-dvh flex items-center justify-center p-4">
         <motion.div
