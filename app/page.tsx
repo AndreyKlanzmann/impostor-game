@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { categoriasPalavras } from "@/lib/pares-palavras"
 import type { GameMode } from "@/lib/game-types"
 
-export default function HomePage() {
+function HomeContent() {
   const [view, setView] = useState<"home" | "create" | "join">("home")
   const [name, setName] = useState("")
   const [code, setCode] = useState("")
@@ -20,7 +20,6 @@ export default function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Se veio de um link direto /?join=ABC123, abre a tela de entrar com código preenchido
   useEffect(() => {
     const joinCode = searchParams.get("join")
     if (joinCode) {
@@ -81,7 +80,6 @@ export default function HomePage() {
   return (
     <main className="min-h-dvh flex items-center justify-center p-4">
       <AnimatePresence mode="wait">
-
         {view === "home" && (
           <motion.div key="home" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
             className="flex flex-col items-center gap-8 max-w-sm w-full">
@@ -89,7 +87,6 @@ export default function HomePage() {
               <h1 className="text-5xl font-bold tracking-tight">Impostor</h1>
               <p className="text-muted-foreground mt-2 text-lg">Descubra quem é o impostor</p>
             </div>
-
             <div className="flex flex-col gap-3 w-full">
               <Button size="lg" className="w-full text-lg h-14" onClick={() => router.push("/local")}>
                 🖥️ Jogo Local
@@ -103,7 +100,6 @@ export default function HomePage() {
                 </Button>
               </div>
             </div>
-
             <div className="text-center flex flex-col gap-1">
               <p className="text-xs text-muted-foreground">🖥️ Local — tela compartilhada, sem limite de jogadores</p>
               <p className="text-xs text-muted-foreground">📱 Multiplayer — cada um no próprio celular</p>
@@ -176,8 +172,15 @@ export default function HomePage() {
             </Card>
           </motion.div>
         )}
-
       </AnimatePresence>
     </main>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
   )
 }
