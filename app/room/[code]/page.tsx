@@ -9,6 +9,8 @@ import { GamePlay } from "@/components/game/game-play"
 import { AnswerPhase } from "@/components/game/answer-phase"
 import { Voting } from "@/components/game/voting"
 import { RoundResult } from "@/components/game/round-result"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export default function RoomPage() {
   const params = useParams()
@@ -20,11 +22,21 @@ export default function RoomPage() {
   const [hasVoted, setHasVoted] = useState(false)
   const [localMode, setLocalMode] = useState<string | null>(null)
 
+  // Estado para entrada via link direto
+  const [needsName, setNeedsName] = useState(false)
+  const [nameInput, setNameInput] = useState("")
+  const [joinError, setJoinError] = useState("")
+  const [joining, setJoining] = useState(false)
+
   useEffect(() => {
     const storedId = sessionStorage.getItem("playerId")
-    if (storedId) setPlayerId(storedId)
-    else router.push("/")
-  }, [router])
+    if (storedId) {
+      setPlayerId(storedId)
+    } else {
+      // Sem username salvo — mostra tela de entrada pelo link
+      setNeedsName(true)
+    }
+  }, [])
 
   useEffect(() => {
     if (votes && playerId) setHasVoted(votes.some(v => v.voter_id === playerId))
@@ -36,20 +48,41 @@ export default function RoomPage() {
 
   const isHost = room?.host_id === playerId
 
-  // Sair da sala completamente (só o próprio jogador)
+  const handleJoinByLink = useCallback(async () => {
+    if (!nameInput.trim()) return
+    setJoining(true)
+    setJoinError("")
+    try {
+      const res = await fetch("/api/rooms/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, playerName: nameInput.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      sessionStorage.setItem("playerId", data.playerId)
+      sessionStorage.setItem("playerName", nameInput.trim())
+      setPlayerId(data.playerId)
+      setNeedsName(false)
+    } catch (err) {
+      setJoinError(err instanceof Error ? err.message : "Erro ao entrar na sala")
+    } finally {
+      setJoining(false)
+    }
+  }, [code, nameInput])
+
   const handleGoHome = useCallback(() => {
     sessionStorage.removeItem("playerId")
     sessionStorage.removeItem("playerName")
     router.push("/")
   }, [router])
 
-  // Voltar ao lobby — só host, puxa todos via Realtime
   const handleGoLobby = useCallback(async () => {
     if (!room || !isHost) return
     await fetch("/api/rooms/return-lobby", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId: room.id, playerId, customTheme }),
+      body: JSON.stringify({ roomId: room.id, playerId }),
     })
   }, [room, playerId, isHost])
 
@@ -120,6 +153,49 @@ export default function RoomPage() {
       setActionLoading(false)
     }
   }, [currentRound, playerId])
+
+  // Tela de entrada via link direto
+  if (needsName) {
+    return (
+      <main className="min-h-dvh flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm flex flex-col gap-5"
+        >
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-1">Entrando na sala</p>
+            <h2 className="text-4xl font-mono font-bold tracking-widest text-primary">{code}</h2>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="text-sm text-muted-foreground mb-1.5 block">Seu nome</label>
+              <Input
+                value={nameInput}
+                onChange={e => setNameInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleJoinByLink()}
+                placeholder="Ex: João"
+                maxLength={20}
+                autoFocus
+              />
+            </div>
+            {joinError && <p className="text-destructive text-sm text-center">{joinError}</p>}
+            <Button
+              onClick={handleJoinByLink}
+              disabled={!nameInput.trim() || joining}
+              className="w-full h-12 text-base"
+            >
+              {joining ? "Entrando..." : "Entrar na sala →"}
+            </Button>
+            <Button variant="ghost" onClick={handleGoHome} className="w-full">
+              ← Voltar ao menu
+            </Button>
+          </div>
+        </motion.div>
+      </main>
+    )
+  }
 
   if (loading) return (
     <main className="min-h-dvh flex items-center justify-center">
