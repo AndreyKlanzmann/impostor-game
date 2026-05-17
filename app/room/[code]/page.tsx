@@ -29,7 +29,7 @@ export default function RoomPage() {
   const [joining, setJoining] = useState(false)
 
   // Só inicializa o hook depois que tiver playerId
-  const { room, players, currentRound, votes, answers, loading, error } = useRoom(ready ? code : "")
+  const { room, players, currentRound, votes, answers, loading, error, refetch } = useRoom(ready ? code : "")
 
   useEffect(() => {
     const storedId = sessionStorage.getItem("playerId")
