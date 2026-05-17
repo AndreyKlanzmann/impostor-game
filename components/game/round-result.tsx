@@ -123,9 +123,13 @@ export function RoundResult({ round, players, votes, isHost, onNextRound, onGoHo
         <p className="text-sm text-muted-foreground">Aguardando host iniciar próxima rodada...</p>
       )}
 
-      <Button variant="ghost" onClick={onGoHome} className="w-full text-muted-foreground">
-        ← Sair da sala
-      </Button>
+      {isHost && (
+        <button onClick={onGoHome}
+          style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}
+          className="text-xs text-muted-foreground underline px-4 py-2 bg-background/80 rounded-full">
+          ← Voltar ao lobby
+        </button>
+      )}
     </motion.div>
   )
 }
