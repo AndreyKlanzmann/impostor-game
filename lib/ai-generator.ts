@@ -69,40 +69,67 @@ Responda APENAS com JSON: {"inocente": "palavra1", "impostor": "palavra2"}`
 function questionPrompt(cat: string, isCustom: boolean) {
   if (isCustom) {
     return `Você é um criador de perguntas para um jogo de impostor.
-Crie um par de perguntas criativas baseadas EXCLUSIVAMENTE no tema escolhido pelo host.
-- As perguntas devem explorar o tema "${cat}" de forma interessante e inesperada
-- Inocentes e impostor recebem perguntas relacionadas mas com respostas naturalmente diferentes
-- As respostas podem ser palavras, nomes, descrições — não precisam ser números
-- Quando a resposta for número, especifique o formato (ex: "só números")
+Crie um par de perguntas baseadas no tema escolhido pelo host.
+
+REGRA MAIS IMPORTANTE: as duas perguntas DEVEM exigir o MESMO FORMATO de resposta.
+- Se uma pede um nome → a outra pede um nome
+- Se uma pede uma história curta → a outra pede uma história curta
+- Se uma pede um número → a outra pede um número
+- NUNCA misture formatos (uma pedindo nome e outra pedindo justificativa)
+
+O CONTEÚDO muda, o FORMATO da resposta não.
 
 Tema: "${cat}"
-Exemplos de como pensar:
-- Tema "futebol": normal "Qual foi o gol mais bonito que você já viu ao vivo?" / variante "Qual foi a maior goleada que você se lembra?"
-- Tema "Harry Potter": normal "Com qual personagem você se identifica mais?" / variante "Qual personagem você acha mais superestimado?"
-- Tema "anos 80": normal "Qual música dos anos 80 você não cansa de ouvir?" / variante "Qual moda dos anos 80 você nunca entendeu?"
+
+Exemplos CORRETOS (mesmo formato):
+- Tema "futebol": normal "Qual time brasileiro você nunca consegue torcer contra?" / variante "Qual time você torce quando seu time não está jogando?"
+  → ambas pedem um nome de time
+- Tema "Harry Potter": normal "Com qual personagem você se identifica mais?" / variante "Com qual personagem você menos se identifica?"
+  → ambas pedem um nome de personagem
+- Tema "anos 80": normal "Qual música dos anos 80 você não cansa de ouvir?" / variante "Qual música dos anos 80 você não aguenta mais?"
+  → ambas pedem uma música
+
+Exemplos ERRADOS (formatos diferentes — NUNCA faça isso):
+- normal "Qual time você torce?" / variante "Qual foi o jogo que mais te emocionou e por quê?"
+  → um pede nome, outro pede história
 
 Responda APENAS com JSON: {"normal": "pergunta inocentes", "variante": "pergunta impostor"}`
   }
 
   return `Você é um criador de perguntas para um jogo de impostor brasileiro.
-O jogo funciona assim: inocentes recebem uma pergunta, o impostor recebe uma pergunta PARECIDA mas diferente. Todos respondem em texto. Depois as respostas aparecem juntas e o grupo tenta achar quem é o impostor pela resposta diferente.
+Inocentes recebem uma pergunta, o impostor recebe uma pergunta PARECIDA mas diferente. Todos respondem em texto. As respostas aparecem juntas e o grupo tenta achar quem é o impostor.
 
-REGRAS FUNDAMENTAIS:
-- As perguntas devem ser CRIATIVAS e INESPERADAS — algo que ninguém esperava ser perguntado
-- A resposta do inocente e do impostor devem ser naturalmente diferentes, revelando o impostor
-- As respostas NÃO precisam ser números — podem ser palavras, nomes, descrições curtas
-- TUDO em contexto brasileiro, cotidiano e acessível
-- NUNCA use nichos obscuros (k-pop, TED Talks, termos técnicos estrangeiros)
-- Quando a resposta for número, especifique o formato
+REGRA MAIS IMPORTANTE: as duas perguntas DEVEM exigir o MESMO FORMATO de resposta.
+- Se uma pede um número → a outra pede um número
+- Se uma pede um nome → a outra pede um nome
+- Se uma pede uma escolha → a outra pede uma escolha
+- Se uma pede uma história curta → a outra pede uma história curta
+- NUNCA misture formatos
+
+O CONTEÚDO muda, o FORMATO não. O impostor se trai pelo conteúdo, não pelo formato.
+
+Outras regras:
+- Perguntas criativas e inesperadas, contexto brasileiro
+- EVITE nichos obscuros (TED Talks, termos estrangeiros, k-pop)
+- Quando a resposta for número, especifique: "(só números, sem R$)"
 
 Categoria: ${cat}
 
-EXEMPLOS DO ESTILO CERTO:
-- inocente: "Quantas pessoas em média você acha que uma pessoa pega em um bloquinho de carnaval?" / impostor: "Fale um número de 1 a 15"
-- inocente: "Se inventasse uma máquina do tempo, para qual época você iria?" / impostor: "Se pudesse pegar um momento da história para botar em um quadro, qual seria?"
-- inocente: "Se você ganhasse na loteria, quantos % você doaria pros seus pais? (só números)" / impostor: "Qual a maior % de gorjeta que você já deu? (só números)"
-- inocente: "Qual o primeiro pensamento que vem na sua cabeça quando acorda?" / impostor: "Qual o último pensamento antes de dormir?"
+EXEMPLOS CORRETOS:
+- inocente: "Quantas pessoas em média você acha que uma pessoa pega num bloquinho?" / impostor: "Fale um número de 1 a 15"
+  → ambas pedem um número
+- inocente: "Se ganhasse na loteria, quantos % doaria pros seus pais? (só números)" / impostor: "Qual a maior % de gorjeta que já deu? (só números)"
+  → ambas pedem uma porcentagem
 - inocente: "Qual comida você comeria todo dia sem enjoar?" / impostor: "Qual comida você nunca mais quer ver na sua vida?"
+  → ambas pedem o nome de uma comida
+- inocente: "Qual o primeiro pensamento quando acorda?" / impostor: "Qual o último pensamento antes de dormir?"
+  → ambas pedem uma frase/pensamento curto
+- inocente: "Se fosse um personagem de novela, seria vilão ou mocinho?" / impostor: "Se fosse um personagem de filme, seria herói ou coadjuvante?"
+  → ambas pedem uma escolha entre opções
+
+EXEMPLOS ERRADOS (nunca faça):
+- inocente: "Qual time você torce?" / impostor: "Qual jogo te emocionou mais e por quê?" → formatos diferentes
+- inocente: "Quantas horas dorme?" / impostor: "Como é sua rotina de sono?" → um número, outro descrição
 
 Responda APENAS com JSON: {"normal": "pergunta inocentes", "variante": "pergunta impostor"}`
 }
