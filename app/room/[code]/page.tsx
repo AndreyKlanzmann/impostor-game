@@ -18,7 +18,6 @@ export default function RoomPage() {
   const [playerId, setPlayerId] = useState<string>("")
   const [actionLoading, setActionLoading] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
-  const [forceLobby, setForceLobby] = useState(false)
   const [localMode, setLocalMode] = useState<string | null>(null)
 
   useEffect(() => {
@@ -32,25 +31,30 @@ export default function RoomPage() {
   }, [votes, playerId])
 
   useEffect(() => {
-    if (currentRound?.status === "revealing") {
-      setHasVoted(false)
-      setForceLobby(false)
-    }
+    if (currentRound?.status === "revealing") setHasVoted(false)
   }, [currentRound?.id, currentRound?.status])
 
   const isHost = room?.host_id === playerId
 
+  // Sair da sala completamente (só o próprio jogador)
   const handleGoHome = useCallback(() => {
     sessionStorage.removeItem("playerId")
     sessionStorage.removeItem("playerName")
     router.push("/")
   }, [router])
 
-  const handleGoLobby = useCallback(() => setForceLobby(true), [])
+  // Voltar ao lobby — só host, puxa todos via Realtime
+  const handleGoLobby = useCallback(async () => {
+    if (!room || !isHost) return
+    await fetch("/api/rooms/return-lobby", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId: room.id, playerId }),
+    })
+  }, [room, playerId, isHost])
 
   const handleStartRound = useCallback(async () => {
     if (!room) return
-    setForceLobby(false)
     setActionLoading(true)
     try {
       const res = await fetch("/api/rooms/start-round", {
@@ -141,7 +145,7 @@ export default function RoomPage() {
 
   const gamePhase = (() => {
     if (!room) return "loading"
-    if (forceLobby || room.status === "waiting" || !currentRound) return "lobby"
+    if (room.status === "waiting" || !currentRound) return "lobby"
     if (currentRound.status === "revealing" || currentRound.status === "debate") return "playing"
     if (currentRound.status === "answers") return "answers"
     if (currentRound.status === "voting") return "voting"
@@ -163,7 +167,6 @@ export default function RoomPage() {
             playerId={playerId} isHost={isHost} isLocalMode={false}
             onAdvanceToVoting={() => {
               if (currentRound.status === "revealing") {
-                // Modo pergunta vai para fase de respostas, palavra vai para debate
                 if (currentMode === "pergunta") handleAdvanceRound("answers")
                 else handleAdvanceRound("debate")
               } else {
@@ -183,7 +186,7 @@ export default function RoomPage() {
 
         {gamePhase === "voting" && currentRound && (
           <Voting key={`vote-${currentRound.id}`} players={players} playerId={playerId}
-            onVote={handleVote} onGoHome={handleGoLobby}
+            isHost={isHost} onVote={handleVote} onGoHome={handleGoLobby}
             votesCount={votes.length} totalPlayers={players.length}
             hasVoted={hasVoted} loading={actionLoading} />
         )}
