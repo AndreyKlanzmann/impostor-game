@@ -158,12 +158,18 @@ export function AnswerPhase({ round, players, playerId, answers, onSubmitAnswer,
           </motion.div>
         )}
       </AnimatePresence>
-
-      <button onClick={onGoHome}
-        style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}
-        className="text-xs text-muted-foreground underline px-4 py-2 bg-background/80 rounded-full">
-        ← Voltar ao lobby
-      </button>
+      {isHost ? (
+        <button onClick={onGoHome}
+          style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}
+          className="text-xs text-muted-foreground underline px-4 py-2 bg-background/80 rounded-full">
+          ← Voltar ao lobby
+        </button>
+      ) : (
+        <p style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}
+          className="text-xs text-muted-foreground px-4 py-2 bg-background/80 rounded-full">
+          Só o host pode voltar ao lobby
+        </p>
+      )}
     </motion.div>
   )
 }
