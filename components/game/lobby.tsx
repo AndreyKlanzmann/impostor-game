@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import type { Player } from "@/lib/game-types"
 
 interface LobbyProps {
@@ -10,7 +11,7 @@ interface LobbyProps {
   players: Player[]
   isHost: boolean
   mode: string
-  onStart: () => void
+  onStart: (customTheme?: string) => void
   onGoHome: () => void
   onChangeMode: (mode: string) => void
   loading: boolean
@@ -18,6 +19,7 @@ interface LobbyProps {
 
 export function Lobby({ code, players, isHost, mode, onStart, onGoHome, onChangeMode, loading }: LobbyProps) {
   const [copied, setCopied] = useState(false)
+  const [customTheme, setCustomTheme] = useState("")
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(code).then(() => {
@@ -44,7 +46,8 @@ export function Lobby({ code, players, isHost, mode, onStart, onGoHome, onChange
         </button>
       </div>
 
-      <div>
+      {/* Modo */}
+      <div className="w-full">
         <p className="text-sm text-muted-foreground mb-2 text-center">Modo de jogo</p>
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => isHost && onChangeMode("palavra")} disabled={!isHost}
@@ -63,6 +66,25 @@ export function Lobby({ code, players, isHost, mode, onStart, onGoHome, onChange
         {!isHost && <p className="text-xs text-muted-foreground text-center mt-1">Só o host pode trocar o modo</p>}
       </div>
 
+      {/* Tema livre */}
+      {isHost && (
+        <div className="w-full">
+          <p className="text-sm text-muted-foreground mb-2">Tema da rodada <span className="text-xs">(opcional)</span></p>
+          <Input
+            value={customTheme}
+            onChange={e => setCustomTheme(e.target.value)}
+            placeholder="Ex: Harry Potter, anos 80, futebol..."
+            maxLength={50}
+          />
+          {customTheme.trim() && (
+            <p className="text-xs text-primary mt-1.5">
+              ✨ A IA vai gerar {mode === "palavra" ? "palavras" : "perguntas"} sobre "{customTheme.trim()}"
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Jogadores */}
       <div className="w-full">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm text-muted-foreground">Jogadores na sala</h3>
@@ -85,8 +107,18 @@ export function Lobby({ code, players, isHost, mode, onStart, onGoHome, onChange
 
       {isHost ? (
         <div className="w-full flex flex-col gap-2">
-          <Button onClick={onStart} disabled={players.length < 3 || loading} className="w-full h-12 text-base">
-            {loading ? "Gerando rodada com IA... 🤖" : players.length < 3 ? `Aguardando jogadores (${players.length}/3)` : "Iniciar Rodada →"}
+          <Button
+            onClick={() => onStart(customTheme.trim() || undefined)}
+            disabled={players.length < 3 || loading}
+            className="w-full h-12 text-base"
+          >
+            {loading
+              ? "Gerando com IA... 🤖"
+              : players.length < 3
+                ? `Aguardando jogadores (${players.length}/3)`
+                : customTheme.trim()
+                  ? `Iniciar → tema "${customTheme.trim()}"`
+                  : "Iniciar Rodada →"}
           </Button>
           {players.length < 3 && <p className="text-xs text-muted-foreground text-center">Precisa de pelo menos 3 jogadores</p>}
         </div>
@@ -102,11 +134,13 @@ export function Lobby({ code, players, isHost, mode, onStart, onGoHome, onChange
         </div>
       )}
 
-      <button onClick={onGoHome}
-        style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}
-        className="text-xs text-muted-foreground underline px-4 py-2">
-        ← Sair da sala
-      </button>
+      {isHost && (
+        <button onClick={onGoHome}
+          style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}
+          className="text-xs text-muted-foreground underline px-4 py-2 bg-background/80 rounded-full">
+          ← Sair da sala
+        </button>
+      )}
     </motion.div>
   )
 }
