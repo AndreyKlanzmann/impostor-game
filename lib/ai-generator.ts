@@ -1,8 +1,28 @@
 import { paresPalavras, type ParPalavra } from '@/lib/pares-palavras'
 import { perguntasBase, type PerguntaBase } from '@/lib/perguntas-base'
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`
+
+async function callGroq(prompt: string): Promise<string> {
+  const res = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 1.2,
+      max_tokens: 200,
+      response_format: { type: 'json_object' },
+    }),
+  })
+  if (!res.ok) throw new Error(`Groq error: ${res.status}`)
+  const data = await res.json()
+  return data.choices?.[0]?.message?.content ?? ''
+}
 
 async function callGemini(prompt: string): Promise<string> {
   const res = await fetch(GEMINI_URL, {
@@ -10,109 +30,70 @@ async function callGemini(prompt: string): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 1.2,
-        maxOutputTokens: 200,
-        responseMimeType: 'application/json',
-      },
+      generationConfig: { temperature: 1.2, maxOutputTokens: 200, responseMimeType: 'application/json' },
     }),
   })
-
   if (!res.ok) throw new Error(`Gemini error: ${res.status}`)
   const data = await res.json()
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 }
 
-export async function generateWordPair(categoria?: string): Promise<ParPalavra> {
+async function callAI(prompt: string): Promise<string> {
   try {
-    const cat = categoria || 'variado'
+    return await callGroq(prompt)
+  } catch {
+    return await callGemini(prompt)
+  }
+}
 
-    const prompt = `Você é um especialista em cultura jovem brasileira, TikTok BR, trends, memes e humor nacional.
-
-Crie um par de palavras para o jogo "Impostor" (estilo Among Us de palavras), voltado para jovens brasileiros de 16-25 anos.
-
-REGRAS DO PAR:
-- As duas palavras devem ser do MESMO universo/contexto para confundir
-- Similares o suficiente para o impostor conseguir se passar por inocente
-- Diferentes o suficiente para o impostor se entregar se não souber
-- Evite palavras muito óbvias ou muito difíceis
-- Use referências ATUAIS do Brasil: TikTok, Instagram, funk, pagode, BBB, reality shows, comidas, gírias, celebridades BR, futebol, etc.
-
+const wordPrompt = (cat: string) => `Você é especialista em cultura jovem brasileira, TikTok BR, trends e memes.
+Crie um par de palavras para o jogo "Impostor" para jovens de 16-25 anos.
+- Mesmo universo, similares para confundir mas diferentes o suficiente para o impostor se entregar
+- Use referências ATUAIS do Brasil: TikTok, Instagram, funk, BBB, comidas, celebridades, futebol
 Categoria: ${cat}
+Exemplos: inocente "coxinha"/impostor "pastel", inocente "TikTok"/impostor "Reels", inocente "Pix"/impostor "TED"
+Responda APENAS com JSON: {"inocente": "palavra1", "impostor": "palavra2"}`
 
-Exemplos do nível certo:
-- inocente: "curtida" / impostor: "salvo" (ambos são interações do Instagram mas diferentes)
-- inocente: "Luva de Pedreiro" / impostor: "Cazé TV" (criadores BR mas diferentes)
-- inocente: "coxinha" / impostor: "quibe" (salgados parecidos)
-- inocente: "pisadinha" / impostor: "brega funk" (ritmos parecidos)
-- inocente: "Palmeiras" / impostor: "Corinthians" (rivais do mesmo estado)
-- inocente: "Kwai" / impostor: "TikTok" (apps de vídeo curto)
-- inocente: "pix" / impostor: "ted" (formas de transferência)
+const questionPrompt = (cat: string) => `Você é especialista em cultura jovem brasileira, TikTok BR e humor nacional.
+Crie um par de perguntas para o jogo "Impostor" para jovens de 16-25 anos.
+- Começa com "Quantos" ou "Quantas", mesmo tema, variação sutil
+- Divertidas, levemente constrangedoras mas não ofensivas
+Categoria: ${cat}
+Exemplos: normal "Quantas horas no TikTok?"/variante "Quantas horas no Instagram?"
+Responda APENAS com JSON: {"normal": "pergunta inocentes", "variante": "pergunta impostor"}`
 
-Responda APENAS com JSON válido, sem texto extra:
-{"inocente": "palavra1", "impostor": "palavra2"}`
-
-    const raw = await callGemini(prompt)
-    const clean = raw.replace(/```json|```/g, '').trim()
-    const obj = JSON.parse(clean)
-
-    if (!obj.inocente || !obj.impostor) throw new Error('Invalid response')
+export async function generateWordPair(categoria?: string): Promise<ParPalavra> {
+  const cat = categoria || 'variado'
+  try {
+    const raw = await callAI(wordPrompt(cat))
+    const obj = JSON.parse(raw.replace(/```json|```/g, '').trim())
+    if (!obj.inocente || !obj.impostor) throw new Error()
     return { categoria: cat, inocente: obj.inocente, impostor: obj.impostor }
   } catch {
-    const filtered = categoria ? paresPalavras.filter(p => p.categoria === categoria) : paresPalavras
-    const pool = filtered.length > 0 ? filtered : paresPalavras
+    const pool = categoria ? paresPalavras.filter(p => p.categoria === categoria) : paresPalavras
     return pool[Math.floor(Math.random() * pool.length)]
   }
 }
 
 export async function generateQuestionPair(categoria?: string): Promise<PerguntaBase> {
+  const cat = categoria || 'variado'
   try {
-    const cat = categoria || 'variado'
-
-    const prompt = `Você é um especialista em cultura jovem brasileira, TikTok BR, memes e humor nacional.
-
-Crie um par de perguntas para o jogo "Impostor", voltado para jovens brasileiros de 16-25 anos.
-
-REGRAS DO PAR:
-- As perguntas devem começar com "Quantos" ou "Quantas"
-- Devem ser do MESMO tema mas com pequena variação para confundir
-- A variante (do impostor) deve ser parecida mas gerar respostas diferentes
-- Devem ser divertidas, levemente constrangedoras mas não ofensivas
-- Use referências da vida real de jovens BR: redes sociais, relacionamentos, festas, comida, dinheiro, etc.
-
-Categoria: ${cat}
-
-Exemplos do nível certo:
-- normal: "Quantas horas por dia você passa no TikTok?" / variante: "Quantas horas por dia você passa no Instagram?"
-- normal: "Quantas vezes você stalkeou seu ex esse mês?" / variante: "Quantas vezes você bloqueou seu ex esse mês?"
-- normal: "Quantos reais você gastou em ifood esse mês?" / variante: "Quantos reais você gastou em uber esse mês?"
-- normal: "Quantas músicas do seu artista favorito você sabe de cor?" / variante: "Quantas músicas você skipou do seu artista favorito?"
-- normal: "Quantas vezes você desmarcou um role esse ano?" / variante: "Quantas vezes te desmarcaram de um role esse ano?"
-
-Responda APENAS com JSON válido, sem texto extra:
-{"normal": "pergunta para inocentes", "variante": "pergunta para o impostor"}`
-
-    const raw = await callGemini(prompt)
-    const clean = raw.replace(/```json|```/g, '').trim()
-    const obj = JSON.parse(clean)
-
-    if (!obj.normal || !obj.variante) throw new Error('Invalid response')
+    const raw = await callAI(questionPrompt(cat))
+    const obj = JSON.parse(raw.replace(/```json|```/g, '').trim())
+    if (!obj.normal || !obj.variante) throw new Error()
     return { categoria: cat, normal: obj.normal, variante: obj.variante }
   } catch {
-    const filtered = categoria ? perguntasBase.filter(p => p.categoria === categoria) : perguntasBase
-    const pool = filtered.length > 0 ? filtered : perguntasBase
+    const pool = categoria ? perguntasBase.filter(p => p.categoria === categoria) : perguntasBase
     return pool[Math.floor(Math.random() * pool.length)]
   }
 }
 
 export function getStaticWordPair(categoria?: string): ParPalavra {
-  const filtered = categoria ? paresPalavras.filter(p => p.categoria === categoria) : paresPalavras
-  const pool = filtered.length > 0 ? filtered : paresPalavras
+  const pool = categoria ? paresPalavras.filter(p => p.categoria === categoria) : paresPalavras
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
 export function getStaticQuestionPair(categoria?: string): PerguntaBase {
-  const filtered = categoria ? perguntasBase.filter(p => p.categoria === categoria) : perguntasBase
-  const pool = filtered.length > 0 ? filtered : perguntasBase
+  const pool = categoria ? perguntasBase.filter(p => p.categoria === categoria) : perguntasBase
   return pool[Math.floor(Math.random() * pool.length)]
 }
