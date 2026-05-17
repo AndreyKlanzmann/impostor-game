@@ -33,7 +33,7 @@ export interface Round {
   question_impostor: string | null
   category: string | null
   ai_generated: boolean
-  status: 'revealing' | 'debate' | 'voting' | 'result'
+  status: 'revealing' | 'answers' | 'debate' | 'voting' | 'result'
   created_at: string
 }
 
@@ -42,6 +42,12 @@ export interface Vote {
   round_id: string
   voter_id: string
   voted_for: string
+}
+
+export interface Answer {
+  round_id: string
+  player_id: string
+  answer: string
 }
 
 export interface GameEvent {
