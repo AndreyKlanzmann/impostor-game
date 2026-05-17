@@ -46,15 +46,19 @@ export function Lobby({ code, players, isHost, mode, onStart, onGoHome, onChange
 
       <div>
         <p className="text-sm text-muted-foreground mb-2 text-center">Modo de jogo</p>
-        <div className="flex gap-2">
-          {["palavra", "pergunta"].map(m => (
-            <button key={m} onClick={() => isHost && onChangeMode(m)} disabled={!isHost}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${
-                mode === m ? "border-primary bg-primary text-primary-foreground" : "border-transparent bg-secondary text-secondary-foreground"
-              } ${isHost ? "cursor-pointer" : "cursor-default opacity-80"}`}>
-              {m === "palavra" ? "Palavra" : "Pergunta"}
-            </button>
-          ))}
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={() => isHost && onChangeMode("palavra")} disabled={!isHost}
+            className={`py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${
+              mode === "palavra" ? "border-primary bg-primary text-primary-foreground" : "border-transparent bg-secondary text-secondary-foreground"
+            } ${isHost ? "cursor-pointer" : "cursor-default opacity-80"}`}>
+            Palavra
+          </button>
+          <button onClick={() => isHost && onChangeMode("pergunta")} disabled={!isHost}
+            className={`py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${
+              mode === "pergunta" ? "border-primary bg-primary text-primary-foreground" : "border-transparent bg-secondary text-secondary-foreground"
+            } ${isHost ? "cursor-pointer" : "cursor-default opacity-80"}`}>
+            Pergunta
+          </button>
         </div>
         {!isHost && <p className="text-xs text-muted-foreground text-center mt-1">Só o host pode trocar o modo</p>}
       </div>
