@@ -30,6 +30,7 @@ export function useRoom(code: string) {
   const supabaseRef = useRef(createClient())
 
   const fetchRoom = useCallback(async () => {
+    if (!code) return
     const supabase = supabaseRef.current
 
     const { data: room, error: roomError } = await supabase
