@@ -16,11 +16,11 @@ export default function RoomPage() {
   const params = useParams()
   const router = useRouter()
   const code = (params.code as string)?.toUpperCase()
-  const { room, players, currentRound, votes, answers, loading, error } = useRoom(code)
   const [playerId, setPlayerId] = useState<string>("")
   const [actionLoading, setActionLoading] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
   const [localMode, setLocalMode] = useState<string | null>(null)
+  const [ready, setReady] = useState(false)
 
   // Estado para entrada via link direto
   const [needsName, setNeedsName] = useState(false)
@@ -28,12 +28,15 @@ export default function RoomPage() {
   const [joinError, setJoinError] = useState("")
   const [joining, setJoining] = useState(false)
 
+  // Só inicializa o hook depois que tiver playerId
+  const { room, players, currentRound, votes, answers, loading, error } = useRoom(ready ? code : "")
+
   useEffect(() => {
     const storedId = sessionStorage.getItem("playerId")
     if (storedId) {
       setPlayerId(storedId)
+      setReady(true)
     } else {
-      // Sem username salvo — mostra tela de entrada pelo link
       setNeedsName(true)
     }
   }, [])
@@ -63,6 +66,7 @@ export default function RoomPage() {
       sessionStorage.setItem("playerId", data.playerId)
       sessionStorage.setItem("playerName", nameInput.trim())
       setPlayerId(data.playerId)
+      setReady(true)
       setNeedsName(false)
     } catch (err) {
       setJoinError(err instanceof Error ? err.message : "Erro ao entrar na sala")
