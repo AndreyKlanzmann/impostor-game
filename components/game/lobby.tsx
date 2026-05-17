@@ -12,10 +12,11 @@ interface LobbyProps {
   mode: string
   onStart: () => void
   onGoHome: () => void
+  onChangeMode: (mode: string) => void
   loading: boolean
 }
 
-export function Lobby({ code, players, isHost, mode, onStart, onGoHome, loading }: LobbyProps) {
+export function Lobby({ code, players, isHost, mode, onStart, onGoHome, onChangeMode, loading }: LobbyProps) {
   const [copied, setCopied] = useState(false)
 
   const handleCopyCode = () => {
@@ -33,7 +34,7 @@ export function Lobby({ code, players, isHost, mode, onStart, onGoHome, loading 
     >
       <div className="text-center">
         <p className="text-sm text-muted-foreground mb-1">Código da sala</p>
-        <button onClick={handleCopyCode} className="group relative">
+        <button onClick={handleCopyCode} className="group">
           <h2 className="text-4xl font-mono font-bold tracking-widest text-primary group-hover:opacity-80 transition-opacity">
             {code}
           </h2>
@@ -43,17 +44,48 @@ export function Lobby({ code, players, isHost, mode, onStart, onGoHome, loading 
         </button>
       </div>
 
-      <div className="flex gap-2 items-center flex-wrap justify-center">
-        <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-xs font-mono uppercase">
-          {mode === "palavra" ? "PALAVRA" : "PERGUNTA"}
-        </span>
-        <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-xs font-mono">
-          {players.length}/8 jogadores
-        </span>
+      {/* Seletor de modo — host pode trocar, outros só visualizam */}
+      <div className="w-full">
+        <p className="text-sm text-muted-foreground mb-2 text-center">Modo de jogo</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => isHost && onChangeMode("palavra")}
+            disabled={!isHost}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border-2 ${
+              mode === "palavra"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-transparent bg-secondary text-secondary-foreground"
+            } ${isHost ? "hover:opacity-90 cursor-pointer" : "cursor-default opacity-80"}`}
+          >
+            Palavra
+          </button>
+          <button
+            onClick={() => isHost && onChangeMode("pergunta")}
+            disabled={!isHost}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border-2 ${
+              mode === "pergunta"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-transparent bg-secondary text-secondary-foreground"
+            } ${isHost ? "hover:opacity-90 cursor-pointer" : "cursor-default opacity-80"}`}
+          >
+            Pergunta
+          </button>
+        </div>
+        {!isHost && (
+          <p className="text-xs text-muted-foreground text-center mt-1">
+            Só o host pode trocar o modo
+          </p>
+        )}
       </div>
 
+      {/* Lista de jogadores */}
       <div className="w-full">
-        <h3 className="text-sm text-muted-foreground mb-3">Jogadores na sala</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm text-muted-foreground">Jogadores na sala</h3>
+          <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full font-mono">
+            {players.length}/8
+          </span>
+        </div>
         <div className="flex flex-col gap-2">
           {players.map((player, i) => (
             <motion.div
@@ -117,9 +149,13 @@ export function Lobby({ code, players, isHost, mode, onStart, onGoHome, loading 
         </div>
       )}
 
-      <button onClick={onGoHome} className="text-xs text-muted-foreground underline">
-        Sair da sala
-      </button>
+      <Button
+        variant="ghost"
+        onClick={onGoHome}
+        className="w-full text-muted-foreground"
+      >
+        ← Sair da sala
+      </Button>
     </motion.div>
   )
 }
