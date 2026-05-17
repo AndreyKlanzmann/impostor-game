@@ -17,7 +17,7 @@ export default function RoomPage() {
   const [playerId, setPlayerId] = useState<string>("")
   const [actionLoading, setActionLoading] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
-  const [isLocalMode, setIsLocalMode] = useState(false)
+  const [forcelobby, setForceLobby] = useState(false)
 
   useEffect(() => {
     const storedId = sessionStorage.getItem("playerId")
@@ -30,7 +30,10 @@ export default function RoomPage() {
   }, [votes, playerId])
 
   useEffect(() => {
-    if (currentRound?.status === "revealing") setHasVoted(false)
+    if (currentRound?.status === "revealing") {
+      setHasVoted(false)
+      setForceLobby(false)
+    }
   }, [currentRound?.id, currentRound?.status])
 
   const isHost = room?.host_id === playerId
@@ -41,8 +44,13 @@ export default function RoomPage() {
     router.push("/")
   }, [router])
 
+  const handleGoLobby = useCallback(() => {
+    setForceLobby(true)
+  }, [])
+
   const handleStartRound = useCallback(async () => {
     if (!room) return
+    setForceLobby(false)
     setActionLoading(true)
     try {
       const res = await fetch("/api/rooms/start-round", {
@@ -102,12 +110,8 @@ export default function RoomPage() {
       <main className="min-h-dvh flex items-center justify-center">
         <motion.div className="flex gap-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {[0, 1, 2].map(i => (
-            <motion.div
-              key={i}
-              className="w-3 h-3 rounded-full bg-primary"
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
-            />
+            <motion.div key={i} className="w-3 h-3 rounded-full bg-primary"
+              animate={{ y: [0, -10, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />
           ))}
         </motion.div>
       </main>
@@ -119,9 +123,7 @@ export default function RoomPage() {
       <main className="min-h-dvh flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-destructive text-lg">{error}</p>
-          <button onClick={() => router.push("/")} className="mt-4 text-primary underline">
-            Voltar ao início
-          </button>
+          <button onClick={() => router.push("/")} className="mt-4 text-primary underline">Voltar ao início</button>
         </div>
       </main>
     )
@@ -129,7 +131,7 @@ export default function RoomPage() {
 
   const gamePhase = (() => {
     if (!room) return "loading"
-    if (room.status === "waiting" || !currentRound) return "lobby"
+    if (forcelobby || room.status === "waiting" || !currentRound) return "lobby"
     if (currentRound.status === "revealing" || currentRound.status === "debate") return "playing"
     if (currentRound.status === "voting") return "voting"
     if (currentRound.status === "result") return "result"
@@ -140,61 +142,31 @@ export default function RoomPage() {
     <main className="min-h-dvh flex items-center justify-center py-8">
       <AnimatePresence mode="wait">
         {gamePhase === "lobby" && (
-          <Lobby
-            key="lobby"
-            code={code}
-            players={players}
-            isHost={isHost}
-            mode={room?.mode || "palavra"}
-            isLocalMode={isLocalMode}
-            onStart={handleStartRound}
-            onGoHome={handleGoHome}
-            onChangeMode={handleChangeMode}
-            onToggleLocalMode={() => setIsLocalMode(v => !v)}
-            loading={actionLoading}
-          />
+          <Lobby key="lobby" code={code} players={players} isHost={isHost}
+            mode={room?.mode || "palavra"} onStart={handleStartRound}
+            onGoHome={handleGoHome} onChangeMode={handleChangeMode} loading={actionLoading} />
         )}
 
         {gamePhase === "playing" && currentRound && (
-          <GamePlay
-            key={`play-${currentRound.id}`}
-            round={currentRound}
-            players={players}
-            playerId={playerId}
-            isHost={isHost}
-            isLocalMode={isLocalMode}
+          <GamePlay key={`play-${currentRound.id}`} round={currentRound} players={players}
+            playerId={playerId} isHost={isHost} isLocalMode={false}
             onAdvanceToVoting={() => {
               if (currentRound.status === "revealing") handleAdvanceRound("debate")
               else handleAdvanceRound("voting")
             }}
-            onGoHome={handleGoHome}
-          />
+            onGoHome={handleGoLobby} />
         )}
 
         {gamePhase === "voting" && currentRound && (
-          <Voting
-            key={`vote-${currentRound.id}`}
-            players={players}
-            playerId={playerId}
-            onVote={handleVote}
-            onGoHome={handleGoHome}
-            votesCount={votes.length}
-            totalPlayers={players.length}
-            hasVoted={hasVoted}
-            loading={actionLoading}
-          />
+          <Voting key={`vote-${currentRound.id}`} players={players} playerId={playerId}
+            onVote={handleVote} onGoHome={handleGoLobby}
+            votesCount={votes.length} totalPlayers={players.length}
+            hasVoted={hasVoted} loading={actionLoading} />
         )}
 
         {gamePhase === "result" && currentRound && (
-          <RoundResult
-            key={`result-${currentRound.id}`}
-            round={currentRound}
-            players={players}
-            votes={votes}
-            isHost={isHost}
-            onNextRound={handleStartRound}
-            onGoHome={handleGoHome}
-          />
+          <RoundResult key={`result-${currentRound.id}`} round={currentRound} players={players}
+            votes={votes} isHost={isHost} onNextRound={handleStartRound} onGoHome={handleGoLobby} />
         )}
       </AnimatePresence>
     </main>
