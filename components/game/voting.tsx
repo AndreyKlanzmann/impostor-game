@@ -5,25 +5,24 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import type { Player } from "@/lib/game-types"
 
-interface VotingProps {
+interface LobbyProps {
+  code: string
   players: Player[]
-  playerId: string
-  onVote: (votedFor: string) => void
-  votesCount: number
-  totalPlayers: number
-  hasVoted: boolean
+  isHost: boolean
+  mode: string
+  onStart: () => void
+  onGoHome: () => void
   loading: boolean
 }
 
-export function Voting({ players, playerId, onVote, votesCount, totalPlayers, hasVoted, loading }: VotingProps) {
-  const [selected, setSelected] = useState<string | null>(null)
+export function Lobby({ code, players, isHost, mode, onStart, onGoHome, loading }: LobbyProps) {
+  const [copied, setCopied] = useState(false)
 
-  const otherPlayers = players.filter(p => p.player_id !== playerId)
-
-  const handleConfirm = () => {
-    if (selected) {
-      onVote(selected)
-    }
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
   }
 
   return (
@@ -33,52 +32,79 @@ export function Voting({ players, playerId, onVote, votesCount, totalPlayers, ha
       className="flex flex-col items-center gap-6 w-full max-w-sm mx-auto px-4"
     >
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">Votacao</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Quem voce acha que e o impostor?
-        </p>
+        <p className="text-sm text-muted-foreground mb-1">Código da sala</p>
+        <button onClick={handleCopyCode} className="group relative">
+          <h2 className="text-4xl font-mono font-bold tracking-widest text-primary group-hover:opacity-80 transition-opacity">
+            {code}
+          </h2>
+          <span className="text-xs text-muted-foreground block mt-1">
+            {copied ? "✓ Copiado!" : "Toque para copiar"}
+          </span>
+        </button>
       </div>
 
-      {!hasVoted ? (
-        <>
-          <div className="w-full flex flex-col gap-2">
-            {otherPlayers.map((player, i) => (
-              <motion.button
-                key={player.player_id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={() => setSelected(player.player_id)}
-                className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all border-2 ${
-                  selected === player.player_id
-                    ? "border-destructive bg-destructive/10"
-                    : "border-transparent bg-secondary/50 hover:bg-secondary"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
-                  {player.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="text-foreground font-medium">{player.name}</span>
-              </motion.button>
-            ))}
-          </div>
+      <div className="flex gap-2 items-center flex-wrap justify-center">
+        <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-xs font-mono uppercase">
+          {mode === "palavra" ? "PALAVRA" : "PERGUNTA"}
+        </span>
+        <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-xs font-mono">
+          {players.length}/8 jogadores
+        </span>
+      </div>
 
+      <div className="w-full">
+        <h3 className="text-sm text-muted-foreground mb-3">Jogadores na sala</h3>
+        <div className="flex flex-col gap-2">
+          {players.map((player, i) => (
+            <motion.div
+              key={player.player_id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.08 }}
+              className="flex items-center gap-3 bg-secondary/50 rounded-lg px-4 py-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                {player.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-foreground font-medium flex-1">{player.name}</span>
+              {player.score > 0 && (
+                <span className="text-xs text-muted-foreground">{player.score} pts</span>
+              )}
+              {player.is_host && (
+                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                  Host
+                </span>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {isHost ? (
+        <div className="w-full flex flex-col gap-2">
           <Button
-            onClick={handleConfirm}
-            disabled={!selected || loading}
-            className="w-full h-12"
-            variant="destructive"
+            onClick={onStart}
+            disabled={players.length < 3 || loading}
+            className="w-full h-12 text-base"
           >
-            {loading ? "Votando..." : "Confirmar Voto"}
+            {loading
+              ? "Gerando rodada com IA... 🤖"
+              : players.length < 3
+                ? `Aguardando jogadores (${players.length}/3)`
+                : "Iniciar Rodada →"}
           </Button>
-        </>
+          {players.length < 3 && (
+            <p className="text-xs text-muted-foreground text-center">
+              Precisa de pelo menos 3 jogadores
+            </p>
+          )}
+        </div>
       ) : (
         <div className="text-center">
-          <p className="text-primary font-semibold">Voto registrado!</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Aguardando outros jogadores... ({votesCount}/{totalPlayers})
+          <p className="text-muted-foreground text-sm">
+            Aguardando o host iniciar o jogo...
           </p>
-          <div className="mt-4 flex gap-1 justify-center">
+          <div className="mt-3 flex gap-1 justify-center">
             {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
@@ -91,9 +117,9 @@ export function Voting({ players, playerId, onVote, votesCount, totalPlayers, ha
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        {votesCount}/{totalPlayers} votos
-      </p>
+      <button onClick={onGoHome} className="text-xs text-muted-foreground underline">
+        Sair da sala
+      </button>
     </motion.div>
   )
 }
