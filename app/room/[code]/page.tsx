@@ -18,6 +18,7 @@ export default function RoomPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
   const [forcelobby, setForceLobby] = useState(false)
+  const [localMode, setLocalMode] = useState<string | null>(null)
 
   useEffect(() => {
     const storedId = sessionStorage.getItem("playerId")
@@ -67,9 +68,10 @@ export default function RoomPage() {
     }
   }, [room, playerId])
 
-  const handleChangeMode = useCallback(async (mode: string) => {
+  const handleChangeMode = useCallback((mode: string) => {
     if (!room) return
-    await fetch("/api/rooms/update-mode", {
+    setLocalMode(mode)
+    fetch("/api/rooms/update-mode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roomId: room.id, playerId, mode }),
@@ -143,7 +145,7 @@ export default function RoomPage() {
       <AnimatePresence mode="wait">
         {gamePhase === "lobby" && (
           <Lobby key="lobby" code={code} players={players} isHost={isHost}
-            mode={room?.mode || "palavra"} onStart={handleStartRound}
+            mode={localMode ?? room?.mode ?? "palavra"} onStart={handleStartRound}
             onGoHome={handleGoHome} onChangeMode={handleChangeMode} loading={actionLoading} />
         )}
 
