@@ -280,13 +280,13 @@ export function GamePlay({ round, players, playerId, onAdvanceToVoting, onGoHome
         {players.length} jogadores · {round.impostor_ids.length} impostor{round.impostor_ids.length > 1 ? "es" : ""}
       </p>
 
-      <button
-        onClick={onGoHome}
-        style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}
-        className="text-xs text-muted-foreground underline underline-offset-2 px-4 py-2"
-      >
-        ← Sair da sala
-      </button>
+      {isHost && (
+        <button onClick={onGoHome}
+          style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}
+          className="text-xs text-muted-foreground underline px-4 py-2 bg-background/80 rounded-full">
+          ← Voltar ao lobby
+        </button>
+      )}
     </motion.div>
   )
 }
