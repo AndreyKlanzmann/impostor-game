@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRoom } from "@/hooks/use-room"
@@ -16,26 +16,24 @@ export default function RoomPage() {
   const params = useParams()
   const router = useRouter()
   const code = (params.code as string)?.toUpperCase()
+
   const [playerId, setPlayerId] = useState<string>("")
   const [actionLoading, setActionLoading] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
   const [localMode, setLocalMode] = useState<string | null>(null)
-  const [ready, setReady] = useState(false)
-
-  // Estado para entrada via link direto
-  const [needsName, setNeedsName] = useState(false)
+  const [needsName, setNeedsName] = useState<boolean | null>(null) // null = ainda verificando
   const [nameInput, setNameInput] = useState("")
   const [joinError, setJoinError] = useState("")
   const [joining, setJoining] = useState(false)
 
-  // Só inicializa o hook depois que tiver playerId
-  const { room, players, currentRound, votes, answers, loading, error, refetch } = useRoom(ready ? code : "")
+  // useRoom sempre roda com o code real — o hook já tem guard interno
+  const { room, players, currentRound, votes, answers, loading, error, refetch } = useRoom(code)
 
   useEffect(() => {
     const storedId = sessionStorage.getItem("playerId")
     if (storedId) {
       setPlayerId(storedId)
-      setReady(true)
+      setNeedsName(false)
     } else {
       setNeedsName(true)
     }
@@ -63,17 +61,19 @@ export default function RoomPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+
       sessionStorage.setItem("playerId", data.playerId)
       sessionStorage.setItem("playerName", nameInput.trim())
       setPlayerId(data.playerId)
-      setReady(true)
       setNeedsName(false)
+      // Refetch explícito para garantir que o jogador aparece imediatamente
+      await refetch()
     } catch (err) {
       setJoinError(err instanceof Error ? err.message : "Erro ao entrar na sala")
     } finally {
       setJoining(false)
     }
-  }, [code, nameInput])
+  }, [code, nameInput, refetch])
 
   const handleGoHome = useCallback(() => {
     sessionStorage.removeItem("playerId")
@@ -157,6 +157,9 @@ export default function RoomPage() {
       setActionLoading(false)
     }
   }, [currentRound, playerId])
+
+  // Ainda verificando se tem sessão salva
+  if (needsName === null) return null
 
   // Tela de entrada via link direto
   if (needsName) {
