@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useRoom } from "@/hooks/use-room"
 import { Lobby } from "@/components/game/lobby"
 import { GamePlay } from "@/components/game/game-play"
+import { AnswerPhase } from "@/components/game/answer-phase"
 import { Voting } from "@/components/game/voting"
 import { RoundResult } from "@/components/game/round-result"
 
@@ -13,11 +14,11 @@ export default function RoomPage() {
   const params = useParams()
   const router = useRouter()
   const code = (params.code as string)?.toUpperCase()
-  const { room, players, currentRound, votes, loading, error } = useRoom(code)
+  const { room, players, currentRound, votes, answers, loading, error } = useRoom(code)
   const [playerId, setPlayerId] = useState<string>("")
   const [actionLoading, setActionLoading] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
-  const [forcelobby, setForceLobby] = useState(false)
+  const [forceLobby, setForceLobby] = useState(false)
   const [localMode, setLocalMode] = useState<string | null>(null)
 
   useEffect(() => {
@@ -45,9 +46,7 @@ export default function RoomPage() {
     router.push("/")
   }, [router])
 
-  const handleGoLobby = useCallback(() => {
-    setForceLobby(true)
-  }, [])
+  const handleGoLobby = useCallback(() => setForceLobby(true), [])
 
   const handleStartRound = useCallback(async () => {
     if (!room) return
@@ -59,10 +58,7 @@ export default function RoomPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roomId: room.id, playerId }),
       })
-      if (!res.ok) {
-        const data = await res.json()
-        console.error("Start round error:", data.error)
-      }
+      if (!res.ok) console.error("Start round error:", (await res.json()).error)
     } finally {
       setActionLoading(false)
     }
@@ -92,6 +88,20 @@ export default function RoomPage() {
     }
   }, [currentRound])
 
+  const handleSubmitAnswer = useCallback(async (answer: string) => {
+    if (!currentRound) return
+    setActionLoading(true)
+    try {
+      await fetch("/api/rooms/submit-answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roundId: currentRound.id, playerId, answer }),
+      })
+    } finally {
+      setActionLoading(false)
+    }
+  }, [currentRound, playerId])
+
   const handleVote = useCallback(async (votedFor: string) => {
     if (!currentRound) return
     setActionLoading(true)
@@ -107,34 +117,33 @@ export default function RoomPage() {
     }
   }, [currentRound, playerId])
 
-  if (loading) {
-    return (
-      <main className="min-h-dvh flex items-center justify-center">
-        <motion.div className="flex gap-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          {[0, 1, 2].map(i => (
-            <motion.div key={i} className="w-3 h-3 rounded-full bg-primary"
-              animate={{ y: [0, -10, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />
-          ))}
-        </motion.div>
-      </main>
-    )
-  }
+  if (loading) return (
+    <main className="min-h-dvh flex items-center justify-center">
+      <motion.div className="flex gap-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        {[0, 1, 2].map(i => (
+          <motion.div key={i} className="w-3 h-3 rounded-full bg-primary"
+            animate={{ y: [0, -10, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />
+        ))}
+      </motion.div>
+    </main>
+  )
 
-  if (error) {
-    return (
-      <main className="min-h-dvh flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-destructive text-lg">{error}</p>
-          <button onClick={() => router.push("/")} className="mt-4 text-primary underline">Voltar ao início</button>
-        </div>
-      </main>
-    )
-  }
+  if (error) return (
+    <main className="min-h-dvh flex items-center justify-center p-4">
+      <div className="text-center">
+        <p className="text-destructive text-lg">{error}</p>
+        <button onClick={() => router.push("/")} className="mt-4 text-primary underline">Voltar ao início</button>
+      </div>
+    </main>
+  )
+
+  const currentMode = localMode ?? room?.mode ?? "palavra"
 
   const gamePhase = (() => {
     if (!room) return "loading"
-    if (forcelobby || room.status === "waiting" || !currentRound) return "lobby"
+    if (forceLobby || room.status === "waiting" || !currentRound) return "lobby"
     if (currentRound.status === "revealing" || currentRound.status === "debate") return "playing"
+    if (currentRound.status === "answers") return "answers"
     if (currentRound.status === "voting") return "voting"
     if (currentRound.status === "result") return "result"
     return "lobby"
@@ -145,7 +154,7 @@ export default function RoomPage() {
       <AnimatePresence mode="wait">
         {gamePhase === "lobby" && (
           <Lobby key="lobby" code={code} players={players} isHost={isHost}
-            mode={localMode ?? room?.mode ?? "palavra"} onStart={handleStartRound}
+            mode={currentMode} onStart={handleStartRound}
             onGoHome={handleGoHome} onChangeMode={handleChangeMode} loading={actionLoading} />
         )}
 
@@ -153,10 +162,23 @@ export default function RoomPage() {
           <GamePlay key={`play-${currentRound.id}`} round={currentRound} players={players}
             playerId={playerId} isHost={isHost} isLocalMode={false}
             onAdvanceToVoting={() => {
-              if (currentRound.status === "revealing") handleAdvanceRound("debate")
-              else handleAdvanceRound("voting")
+              if (currentRound.status === "revealing") {
+                // Modo pergunta vai para fase de respostas, palavra vai para debate
+                if (currentMode === "pergunta") handleAdvanceRound("answers")
+                else handleAdvanceRound("debate")
+              } else {
+                handleAdvanceRound("voting")
+              }
             }}
             onGoHome={handleGoLobby} />
+        )}
+
+        {gamePhase === "answers" && currentRound && (
+          <AnswerPhase key={`answers-${currentRound.id}`} round={currentRound} players={players}
+            playerId={playerId} answers={answers} isHost={isHost}
+            onSubmitAnswer={handleSubmitAnswer}
+            onAdvanceToVoting={() => handleAdvanceRound("voting")}
+            onGoHome={handleGoLobby} loading={actionLoading} />
         )}
 
         {gamePhase === "voting" && currentRound && (
