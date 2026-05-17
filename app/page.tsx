@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,16 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Se veio de um link direto /?join=ABC123, abre a tela de entrar com código preenchido
+  useEffect(() => {
+    const joinCode = searchParams.get("join")
+    if (joinCode) {
+      setCode(joinCode.toUpperCase())
+      setView("join")
+    }
+  }, [searchParams])
 
   const handleCreate = async () => {
     if (!name.trim()) { setError("Digite seu nome"); return }
@@ -104,9 +114,7 @@ export default function HomePage() {
         {view === "create" && (
           <motion.div key="create" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="w-full max-w-sm">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl text-center">Criar Sala</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-2xl text-center">Criar Sala</CardTitle></CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Seu Nome</label>
@@ -115,9 +123,9 @@ export default function HomePage() {
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-2 block">Modo</label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {(["palavra", "pergunta"] as GameMode[]).map(m => (
-                      <Button key={m} variant={mode === m ? "default" : "secondary"} className="flex-1" onClick={() => setMode(m)}>
+                      <Button key={m} variant={mode === m ? "default" : "secondary"} onClick={() => setMode(m)}>
                         {m === "palavra" ? "Palavra" : "Pergunta"}
                       </Button>
                     ))}
@@ -147,13 +155,12 @@ export default function HomePage() {
         {view === "join" && (
           <motion.div key="join" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="w-full max-w-sm">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl text-center">Entrar em Sala</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-2xl text-center">Entrar em Sala</CardTitle></CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Seu Nome</label>
-                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Maria" maxLength={20} autoFocus />
+                  <Input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleJoin()}
+                    placeholder="Ex: Maria" maxLength={20} autoFocus />
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Código da Sala</label>
