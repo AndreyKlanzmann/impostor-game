@@ -27,14 +27,12 @@ export default function RoomPage() {
     }
   }, [router])
 
-  // Track if current player has voted
   useEffect(() => {
     if (votes && playerId) {
       setHasVoted(votes.some(v => v.voter_id === playerId))
     }
   }, [votes, playerId])
 
-  // Reset hasVoted when a new round starts
   useEffect(() => {
     if (currentRound?.status === "revealing") {
       setHasVoted(false)
@@ -42,6 +40,12 @@ export default function RoomPage() {
   }, [currentRound?.id, currentRound?.status])
 
   const isHost = room?.host_id === playerId
+
+  const handleGoHome = useCallback(() => {
+    sessionStorage.removeItem("playerId")
+    sessionStorage.removeItem("playerName")
+    router.push("/")
+  }, [router])
 
   const handleStartRound = useCallback(async () => {
     if (!room) return
@@ -97,11 +101,7 @@ export default function RoomPage() {
   if (loading) {
     return (
       <main className="min-h-dvh flex items-center justify-center">
-        <motion.div
-          className="flex gap-1"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
+        <motion.div className="flex gap-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {[0, 1, 2].map(i => (
             <motion.div
               key={i}
@@ -120,11 +120,8 @@ export default function RoomPage() {
       <main className="min-h-dvh flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-destructive text-lg">{error}</p>
-          <button
-            onClick={() => router.push("/")}
-            className="mt-4 text-primary underline"
-          >
-            Voltar ao inicio
+          <button onClick={() => router.push("/")} className="mt-4 text-primary underline">
+            Voltar ao início
           </button>
         </div>
       </main>
@@ -151,6 +148,7 @@ export default function RoomPage() {
             isHost={isHost}
             mode={room?.mode || "palavra"}
             onStart={handleStartRound}
+            onGoHome={handleGoHome}
             loading={actionLoading}
           />
         )}
@@ -169,6 +167,7 @@ export default function RoomPage() {
                 handleAdvanceRound("voting")
               }
             }}
+            onGoHome={handleGoHome}
           />
         )}
 
@@ -178,6 +177,7 @@ export default function RoomPage() {
             players={players}
             playerId={playerId}
             onVote={handleVote}
+            onGoHome={handleGoHome}
             votesCount={votes.length}
             totalPlayers={players.length}
             hasVoted={hasVoted}
@@ -193,6 +193,7 @@ export default function RoomPage() {
             votes={votes}
             isHost={isHost}
             onNextRound={handleStartRound}
+            onGoHome={handleGoHome}
           />
         )}
       </AnimatePresence>
