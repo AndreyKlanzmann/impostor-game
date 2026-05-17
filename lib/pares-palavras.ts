@@ -1,0 +1,133 @@
+export interface ParPalavra {
+  categoria: string
+  inocente: string
+  impostor: string
+}
+
+export const paresPalavras: ParPalavra[] = [
+  // ===== COMIDA DE BOTECO / RUA =====
+  { categoria: "comida", inocente: "coxinha", impostor: "pastel" },
+  { categoria: "comida", inocente: "pastel de feira", impostor: "pastel de boteco" },
+  { categoria: "comida", inocente: "pao de queijo", impostor: "biscoito de polvilho" },
+  { categoria: "comida", inocente: "esfiha", impostor: "quibe" },
+  { categoria: "comida", inocente: "kibe frito", impostor: "kibe cru" },
+  { categoria: "comida", inocente: "espetinho de frango", impostor: "espetinho de coracao" },
+  { categoria: "comida", inocente: "churrasco", impostor: "rodizio" },
+  { categoria: "comida", inocente: "picanha", impostor: "maminha" },
+  { categoria: "comida", inocente: "linguica", impostor: "salsicha" },
+  { categoria: "comida", inocente: "farofa", impostor: "vinagrete" },
+  { categoria: "comida", inocente: "feijoada", impostor: "feijao tropeiro" },
+  { categoria: "comida", inocente: "arroz com feijao", impostor: "arroz carreteiro" },
+  { categoria: "comida", inocente: "macarronada", impostor: "lasanha" },
+  { categoria: "comida", inocente: "strogonoff de frango", impostor: "strogonoff de carne" },
+  { categoria: "comida", inocente: "batata frita", impostor: "mandioca frita" },
+  { categoria: "comida", inocente: "x-salada", impostor: "x-tudo" },
+  { categoria: "comida", inocente: "hamburguer artesanal", impostor: "hamburguer de fast food" },
+  { categoria: "comida", inocente: "hot dog de rua", impostor: "hot dog prensado" },
+  { categoria: "comida", inocente: "pizza de calabresa", impostor: "pizza de pepperoni" },
+  { categoria: "comida", inocente: "pizza doce", impostor: "pizza salgada" },
+  { categoria: "comida", inocente: "brigadeiro", impostor: "beijinho" },
+  { categoria: "comida", inocente: "bolo de aniversario", impostor: "bolo de pote" },
+  { categoria: "comida", inocente: "pudim", impostor: "manjar" },
+  { categoria: "comida", inocente: "acai", impostor: "sorvete de creme" },
+  { categoria: "comida", inocente: "milkshake", impostor: "vitamina" },
+  { categoria: "comida", inocente: "tapioca", impostor: "crepe" },
+  { categoria: "comida", inocente: "cuscuz nordestino", impostor: "cuscuz paulista" },
+  { categoria: "comida", inocente: "moqueca", impostor: "bobo de camarao" },
+  { categoria: "comida", inocente: "acaraje", impostor: "abara" },
+  { categoria: "comida", inocente: "pamonha", impostor: "curau" },
+  { categoria: "comida", inocente: "pacoca", impostor: "pe de moleque" },
+  { categoria: "comida", inocente: "miojo", impostor: "yakisoba" },
+  { categoria: "comida", inocente: "sushi", impostor: "temaki" },
+  { categoria: "comida", inocente: "marmita de casa", impostor: "marmitex do restaurante" },
+
+  // ===== BEBIDA =====
+  { categoria: "bebida", inocente: "cerveja", impostor: "chopp" },
+  { categoria: "bebida", inocente: "caipirinha", impostor: "caipiroska" },
+  { categoria: "bebida", inocente: "vinho tinto", impostor: "vinho do porto" },
+  { categoria: "bebida", inocente: "vodka", impostor: "cachaca" },
+  { categoria: "bebida", inocente: "coca-cola", impostor: "pepsi" },
+  { categoria: "bebida", inocente: "guarana", impostor: "tubaina" },
+  { categoria: "bebida", inocente: "suco de laranja", impostor: "suco de maracuja" },
+  { categoria: "bebida", inocente: "agua com gas", impostor: "tonica" },
+  { categoria: "bebida", inocente: "cafe coado", impostor: "cafe expresso" },
+  { categoria: "bebida", inocente: "cappuccino", impostor: "mocha" },
+  { categoria: "bebida", inocente: "cha gelado", impostor: "mate" },
+  { categoria: "bebida", inocente: "leite com nescau", impostor: "leite com toddy" },
+  { categoria: "bebida", inocente: "energetico", impostor: "isotonico" },
+  { categoria: "bebida", inocente: "whisky", impostor: "rum" },
+  { categoria: "bebida", inocente: "gin tonica", impostor: "vodka tonica" },
+
+  // ===== INTERNET / REDES =====
+  { categoria: "internet", inocente: "tiktok", impostor: "reels" },
+  { categoria: "internet", inocente: "instagram", impostor: "facebook" },
+  { categoria: "internet", inocente: "stories", impostor: "close friends" },
+  { categoria: "internet", inocente: "whatsapp", impostor: "telegram" },
+  { categoria: "internet", inocente: "grupo da familia no zap", impostor: "grupo do trampo no zap" },
+  { categoria: "internet", inocente: "twitter", impostor: "threads" },
+  { categoria: "internet", inocente: "youtube", impostor: "twitch" },
+  { categoria: "internet", inocente: "live", impostor: "podcast" },
+  { categoria: "internet", inocente: "influencer", impostor: "digital influencer" },
+  { categoria: "internet", inocente: "meme", impostor: "trend" },
+  { categoria: "internet", inocente: "dancinha do tiktok", impostor: "dublagem do tiktok" },
+  { categoria: "internet", inocente: "spotify", impostor: "deezer" },
+  { categoria: "internet", inocente: "netflix", impostor: "prime video" },
+  { categoria: "internet", inocente: "discord", impostor: "telegram em grupo" },
+  { categoria: "internet", inocente: "stalkear ex", impostor: "stalkear crush" },
+  { categoria: "internet", inocente: "wi-fi do vizinho", impostor: "wi-fi da padaria" },
+
+  // ===== ROLE / VIDA SOCIAL =====
+  { categoria: "role", inocente: "balada", impostor: "barzinho" },
+  { categoria: "role", inocente: "festa em casa", impostor: "festa em chacara" },
+  { categoria: "role", inocente: "show de sertanejo", impostor: "show de funk" },
+  { categoria: "role", inocente: "festival de musica", impostor: "festival de cerveja" },
+  { categoria: "role", inocente: "role no shopping", impostor: "role no centro" },
+  { categoria: "role", inocente: "cinema", impostor: "drive-in" },
+  { categoria: "role", inocente: "praia", impostor: "piscina" },
+  { categoria: "role", inocente: "trilha", impostor: "cachoeira" },
+  { categoria: "role", inocente: "viagem internacional", impostor: "viagem nacional" },
+  { categoria: "role", inocente: "primeiro encontro", impostor: "encontro as cegas" },
+  { categoria: "role", inocente: "noivado", impostor: "casamento civil" },
+  { categoria: "role", inocente: "cha de bebe", impostor: "cha revelacao" },
+  { categoria: "role", inocente: "carnaval de rua", impostor: "carnaval em camarote" },
+  { categoria: "role", inocente: "reveillon na praia", impostor: "reveillon em casa" },
+  { categoria: "role", inocente: "tinder match", impostor: "bumble match" },
+
+  // ===== CULTURA POP =====
+  { categoria: "cultura pop", inocente: "BBB", impostor: "A Fazenda" },
+  { categoria: "cultura pop", inocente: "filme de terror", impostor: "filme de suspense" },
+  { categoria: "cultura pop", inocente: "filme da Marvel", impostor: "filme da DC" },
+  { categoria: "cultura pop", inocente: "Round 6", impostor: "Alice in Borderland" },
+  { categoria: "cultura pop", inocente: "Naruto", impostor: "Bleach" },
+  { categoria: "cultura pop", inocente: "One Piece", impostor: "Dragon Ball" },
+  { categoria: "cultura pop", inocente: "Friends", impostor: "How I Met Your Mother" },
+  { categoria: "cultura pop", inocente: "The Office", impostor: "Brooklyn 99" },
+
+  // ===== GAMES =====
+  { categoria: "games", inocente: "Free Fire", impostor: "PUBG Mobile" },
+  { categoria: "games", inocente: "Valorant", impostor: "CS" },
+  { categoria: "games", inocente: "League of Legends", impostor: "Dota" },
+  { categoria: "games", inocente: "GTA V", impostor: "GTA San Andreas" },
+  { categoria: "games", inocente: "Minecraft", impostor: "Roblox" },
+  { categoria: "games", inocente: "FIFA", impostor: "eFootball" },
+  { categoria: "games", inocente: "Playstation", impostor: "Xbox" },
+
+  // ===== MUSICA =====
+  { categoria: "musica", inocente: "sertanejo universitario", impostor: "sertanejo raiz" },
+  { categoria: "musica", inocente: "funk carioca", impostor: "funk paulista" },
+  { categoria: "musica", inocente: "pagode", impostor: "samba" },
+  { categoria: "musica", inocente: "forro", impostor: "piseiro" },
+  { categoria: "musica", inocente: "rap nacional", impostor: "trap nacional" },
+  { categoria: "musica", inocente: "k-pop", impostor: "j-pop" },
+  { categoria: "musica", inocente: "Anitta", impostor: "Ludmilla" },
+
+  // ===== ESPORTE =====
+  { categoria: "esporte", inocente: "futebol de campo", impostor: "society" },
+  { categoria: "esporte", inocente: "pelada com os amigos", impostor: "fut do trampo" },
+  { categoria: "esporte", inocente: "academia", impostor: "crossfit" },
+  { categoria: "esporte", inocente: "yoga", impostor: "pilates" },
+  { categoria: "esporte", inocente: "Libertadores", impostor: "Champions League" },
+  { categoria: "esporte", inocente: "brasileirao", impostor: "copa do brasil" },
+]
+
+export const categoriasPalavras = [...new Set(paresPalavras.map(p => p.categoria))]
