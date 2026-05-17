@@ -6,14 +6,8 @@ import type { Player, Round, Answer } from "@/lib/game-types"
 
 interface RoomState {
   room: {
-    id: string
-    code: string
-    host_id: string
-    status: string
-    mode: string
-    categories: string[]
-    max_players: number
-    current_round: number
+    id: string; code: string; host_id: string; status: string
+    mode: string; categories: string[]; max_players: number; current_round: number
   } | null
   players: Player[]
   currentRound: Round | null
@@ -30,7 +24,10 @@ export function useRoom(code: string) {
   const supabaseRef = useRef(createClient())
 
   const fetchRoom = useCallback(async () => {
-    if (!code) { setLoading(false); return }
+    if (!code) {
+      setLoading(false)
+      return
+    }
     const supabase = supabaseRef.current
 
     const { data: room, error: roomError } = await supabase
@@ -56,12 +53,10 @@ export function useRoom(code: string) {
 
       if (round) {
         currentRound = round
-
         const [{ data: voteData }, { data: answerData }] = await Promise.all([
           supabase.from("votes").select("voter_id, voted_for").eq("round_id", round.id),
           supabase.from("answers").select("round_id, player_id, answer").eq("round_id", round.id),
         ])
-
         votes = voteData || []
         answers = answerData || []
       }
@@ -73,8 +68,9 @@ export function useRoom(code: string) {
 
   useEffect(() => {
     fetchRoom()
-    const supabase = supabaseRef.current
+    if (!code) return
 
+    const supabase = supabaseRef.current
     const channel = supabase
       .channel(`room-${code}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: `code=eq.${code}` }, () => fetchRoom())
