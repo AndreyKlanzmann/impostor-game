@@ -15,15 +15,12 @@ interface RoundResultProps {
 
 export function RoundResult({ round, players, votes, isHost, onNextRound, onGoHome }: RoundResultProps) {
   const tally: Record<string, number> = {}
-  votes.forEach(v => {
-    tally[v.voted_for] = (tally[v.voted_for] || 0) + 1
-  })
+  votes.forEach(v => { tally[v.voted_for] = (tally[v.voted_for] || 0) + 1 })
 
   const sortedPlayers = [...players].sort((a, b) => (tally[b.player_id] || 0) - (tally[a.player_id] || 0))
   const maxVotes = Math.max(...Object.values(tally), 0)
   const mostVoted = Object.keys(tally).filter(k => tally[k] === maxVotes)
   const impostorCaught = mostVoted.some(id => round.impostor_ids.includes(id))
-
   const getPlayerName = (id: string) => players.find(p => p.player_id === id)?.name || "?"
 
   return (
@@ -37,13 +34,10 @@ export function RoundResult({ round, players, votes, isHost, onNextRound, onGoHo
           {impostorCaught ? "Impostor descoberto!" : "Impostor escapou!"}
         </h2>
         <p className="text-muted-foreground mt-2">
-          {impostorCaught
-            ? "Os inocentes venceram esta rodada!"
-            : "O impostor enganou todo mundo!"}
+          {impostorCaught ? "Os inocentes venceram esta rodada!" : "O impostor enganou todo mundo!"}
         </p>
       </motion.div>
 
-      {/* Revelação dos impostores */}
       <div className="w-full bg-secondary/30 rounded-xl p-4">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">
           {round.impostor_ids.length > 1 ? "Impostores eram" : "Impostor era"}
@@ -59,7 +53,6 @@ export function RoundResult({ round, players, votes, isHost, onNextRound, onGoHo
         ))}
       </div>
 
-      {/* Palavras/perguntas reveladas */}
       {round.word_innocent && (
         <div className="w-full grid grid-cols-2 gap-3">
           <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-center">
@@ -86,7 +79,6 @@ export function RoundResult({ round, players, votes, isHost, onNextRound, onGoHo
         </div>
       )}
 
-      {/* Votos */}
       <div className="w-full">
         <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Votos</p>
         <div className="flex flex-col gap-1.5">
@@ -94,12 +86,7 @@ export function RoundResult({ round, players, votes, isHost, onNextRound, onGoHo
             const isImp = round.impostor_ids.includes(player.player_id)
             const voteCount = tally[player.player_id] || 0
             return (
-              <div
-                key={player.player_id}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
-                  isImp ? "bg-destructive/10" : "bg-secondary/30"
-                }`}
-              >
+              <div key={player.player_id} className={`flex items-center gap-3 rounded-lg px-3 py-2 ${isImp ? "bg-destructive/10" : "bg-secondary/30"}`}>
                 <span className="text-foreground text-sm flex-1">
                   {player.name}
                   {isImp && <span className="text-destructive text-xs ml-1">(impostor)</span>}
@@ -116,7 +103,6 @@ export function RoundResult({ round, players, votes, isHost, onNextRound, onGoHo
         </div>
       </div>
 
-      {/* Placar */}
       <div className="w-full">
         <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Placar</p>
         <div className="flex flex-col gap-1">
@@ -134,14 +120,12 @@ export function RoundResult({ round, players, votes, isHost, onNextRound, onGoHo
           Próxima Rodada
         </Button>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          Aguardando host iniciar próxima rodada...
-        </p>
+        <p className="text-sm text-muted-foreground">Aguardando host iniciar próxima rodada...</p>
       )}
 
-      <button onClick={onGoHome} className="text-xs text-muted-foreground underline">
-        Sair da sala
-      </button>
+      <Button variant="ghost" onClick={onGoHome} className="w-full text-muted-foreground">
+        ← Sair da sala
+      </Button>
     </motion.div>
   )
 }
